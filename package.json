@@ -2,6 +2,12 @@
   "name": "zod-storage",
   "version": "0.1.0",
   "description": "Type-safe Browser Storage wrapper with Zod runtime validation",
+  "authors": [
+    {
+      "name": "YESHYUNGSEOK",
+      "email": "eric.nohhyungseok@gmail.com"
+    }
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
