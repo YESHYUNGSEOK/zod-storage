@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { z } from 'zod';
 import { ss } from '../ss';
-import { safeStorage } from '../safe-storage';
+import { safeStorage } from '../SafeStorage';
 
 describe('ss function', () => {
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe('ss function', () => {
       expect(safeStorage.get(storage)).toBe('dark');
     });
 
-    it('should reject invalid enum value when corrupted', () => {
+    it('should reject invalid enum value when corrupted (onFailure: null)', () => {
       const storage = ss({
         key: 'theme',
         schema: z.enum(['light', 'dark', 'auto']),
@@ -86,10 +86,10 @@ describe('ss function', () => {
 
       // 사용자가 직접 localStorage를 오염시킨 경우
       localStorage.setItem('theme', JSON.stringify('invalid'));
-      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+      expect(safeStorage.get(storage)).toBeNull();
     });
 
-    it('should return defaultValue when enum value is invalid (non-strict mode)', () => {
+    it('should return defaultValue when enum value is invalid (onFailure: default)', () => {
       const storage = ss({
         key: 'theme',
         schema: z.enum(['light', 'dark', 'auto']),
@@ -97,7 +97,7 @@ describe('ss function', () => {
       });
 
       localStorage.setItem('theme', JSON.stringify('invalid'));
-      expect(safeStorage.get(storage)).toBe('light');
+      expect(safeStorage.get(storage, { onFailure: 'default' })).toBe('light');
     });
 
     it('should work with numeric enum', () => {
@@ -140,7 +140,7 @@ describe('ss function', () => {
       expect(safeStorage.get(storage)).toEqual(user);
     });
 
-    it('should reject invalid object when corrupted', () => {
+    it('should reject invalid object when corrupted (onFailure: null)', () => {
       const userSchema = z.object({
         id: z.number(),
         name: z.string(),
@@ -159,10 +159,10 @@ describe('ss function', () => {
 
       // 필수 필드 누락
       localStorage.setItem('user', JSON.stringify({ id: 1 }));
-      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+      expect(safeStorage.get(storage)).toBeNull();
     });
 
-    it('should return defaultValue when object is invalid (non-strict mode)', () => {
+    it('should return defaultValue when object is invalid (onFailure: default)', () => {
       const userSchema = z.object({
         id: z.number(),
         name: z.string(),
@@ -180,7 +180,7 @@ describe('ss function', () => {
       });
 
       localStorage.setItem('user', JSON.stringify({ id: 1 }));
-      expect(safeStorage.get(storage)).toEqual({
+      expect(safeStorage.get(storage, { onFailure: 'default' })).toEqual({
         id: 0,
         name: '',
         email: '',
@@ -253,7 +253,7 @@ describe('ss function', () => {
       expect(safeStorage.get(storage)).toEqual(tasks);
     });
 
-    it('should reject invalid array items when corrupted', () => {
+    it('should reject invalid array items when corrupted (onFailure: null)', () => {
       const taskSchema = z.array(
         z.object({
           id: z.number(),
@@ -277,7 +277,7 @@ describe('ss function', () => {
         ])
       );
 
-      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+      expect(safeStorage.get(storage)).toBeNull();
     });
   });
 
@@ -292,7 +292,7 @@ describe('ss function', () => {
       expect(safeStorage.get(storage)).toBeNull();
     });
 
-    it('should return defaultValue when stored value is invalid JSON (non-strict mode)', () => {
+    it('should return defaultValue when stored value is invalid JSON (onFailure: default)', () => {
       const storage = ss({
         key: 'invalid',
         schema: z.array(z.number()),
@@ -300,10 +300,10 @@ describe('ss function', () => {
       });
 
       localStorage.setItem('invalid', 'invalid json');
-      expect(safeStorage.get(storage)).toEqual([1, 2, 3]);
+      expect(safeStorage.get(storage, { onFailure: 'default' })).toEqual([1, 2, 3]);
     });
 
-    it('should return null when stored value is invalid JSON (strict mode)', () => {
+    it('should return null when stored value is invalid JSON (onFailure: null)', () => {
       const storage = ss({
         key: 'invalid',
         schema: z.array(z.number()),
@@ -311,7 +311,7 @@ describe('ss function', () => {
       });
 
       localStorage.setItem('invalid', 'invalid json');
-      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+      expect(safeStorage.get(storage)).toBeNull();
     });
 
     it('should reject wrong type when corrupted (string instead of number)', () => {
@@ -322,8 +322,8 @@ describe('ss function', () => {
       });
 
       localStorage.setItem('count', JSON.stringify('not a number'));
-      expect(safeStorage.get(storage, { strict: true })).toBeNull();
-      expect(safeStorage.get(storage)).toBe(0);
+      expect(safeStorage.get(storage)).toBeNull();
+      expect(safeStorage.get(storage, { onFailure: 'default' })).toBe(0);
     });
 
     it('should reject wrong array element type when corrupted', () => {
@@ -334,8 +334,8 @@ describe('ss function', () => {
       });
 
       localStorage.setItem('numbers', JSON.stringify([1, 2, 'three', 4]));
-      expect(safeStorage.get(storage, { strict: true })).toBeNull();
-      expect(safeStorage.get(storage)).toEqual([]);
+      expect(safeStorage.get(storage)).toBeNull();
+      expect(safeStorage.get(storage, { onFailure: 'default' })).toEqual([]);
     });
 
     it('should work with empty array defaultValue', () => {
@@ -398,6 +398,78 @@ describe('ss function', () => {
 
       safeStorage.remove(storage);
       expect(safeStorage.get(storage)).toBeNull();
+    });
+  });
+
+  describe('storage types', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+
+    it('should use localStorage by default', () => {
+      const storage = ss({
+        key: 'localData',
+        schema: z.string(),
+        defaultValue: '',
+      });
+
+      safeStorage.set(storage, 'test');
+      expect(localStorage.getItem('localData')).toBe(JSON.stringify('test'));
+      expect(sessionStorage.getItem('localData')).toBeNull();
+    });
+
+    it('should use sessionStorage when specified', () => {
+      const storage = ss({
+        key: 'sessionData',
+        schema: z.string(),
+        defaultValue: '',
+        storage: 'session',
+      });
+
+      safeStorage.set(storage, 'test');
+      expect(sessionStorage.getItem('sessionData')).toBe(JSON.stringify('test'));
+      expect(localStorage.getItem('sessionData')).toBeNull();
+    });
+
+    it('should work with sessionStorage get/set/remove', () => {
+      const storage = ss({
+        key: 'sessionTest',
+        schema: z.array(z.number()),
+        defaultValue: [],
+        storage: 'session',
+      });
+
+      safeStorage.set(storage, [1, 2, 3]);
+      expect(safeStorage.get(storage)).toEqual([1, 2, 3]);
+
+      safeStorage.remove(storage);
+      expect(safeStorage.get(storage)).toBeNull();
+    });
+
+    it('should work with sessionStorage init', () => {
+      const storage = ss({
+        key: 'sessionInit',
+        schema: z.number(),
+        defaultValue: 42,
+        storage: 'session',
+      });
+
+      safeStorage.init(storage);
+      expect(safeStorage.get(storage)).toBe(42);
+      expect(sessionStorage.getItem('sessionInit')).toBe(JSON.stringify(42));
+    });
+
+    it('should handle validation failures in sessionStorage', () => {
+      const storage = ss({
+        key: 'sessionValidation',
+        schema: z.number(),
+        defaultValue: 0,
+        storage: 'session',
+      });
+
+      sessionStorage.setItem('sessionValidation', JSON.stringify('not a number'));
+      expect(safeStorage.get(storage)).toBeNull();
+      expect(safeStorage.get(storage, { onFailure: 'default' })).toBe(0);
     });
   });
 });

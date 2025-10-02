@@ -1,33 +1,34 @@
-import { SafeStorage } from './types';
-import { SafeStorageGetOptions } from './options';
+import { SafeStorage } from '@/types/ss.type';
+import { SafeStorageGetOptions } from '../types/safe-storage.type';
+import { getStorageObject } from '../utils/getStorageObject';
 
 /**
- * 로컬 스토리지에서 값을 가져옵니다.
- * - JSON parse 및 zod schema validation을 통과하지 못하면 strict 옵션에 따라 null 또는 defaultValue 반환
+ * 스토리지에서 값을 가져옵니다.
+ * - JSON parse 및 zod schema validation을 통과하지 못하면 옵션에 따라 null 또는 defaultValue 반환
  *
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
- * @returns {T | null} 저장된 값. 값이 없으면 `null`, 잘못된 값이면 `defaultValue`
+ * @returns {T | null} 저장된 값. 값이 없으면 `null`
  */
 function get<T>(storageConfig: SafeStorage<T>): T | null;
 /**
- * 로컬 스토리지에서 값을 가져옵니다.
- * - JSON parse 및 zod schema validation을 통과하지 못하면 strict 옵션에 따라 null 또는 defaultValue 반환
+ * 스토리지에서 값을 가져옵니다.
+ * - JSON parse 및 zod schema validation을 통과하지 못하면 옵션에 따라 null 또는 defaultValue 반환
  *
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
- * @param {object} options - 선택적 옵션
- * @param {boolean} options.strict - true일 경우 parse 실패 시 null 반환, false일 경우 defaultValue 반환 (기본값: false)
+ * @param {SafeStorageGetOptions} options - 선택적 옵션
  * @returns {T | null} 저장된 값. 값이 없으면 `null`, 잘못된 값이면 옵션에 따라 `defaultValue` 또는 `null`
  */
-function get<T>(storageConfig: SafeStorage<T>): T | null;
 function get<T>(storageConfig: SafeStorage<T>, options: SafeStorageGetOptions): T | null;
 function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions): T | null {
-  const { key, value: schema, defaultValue } = storageConfig;
+  const { key, value: schema, defaultValue, storage = 'local' } = storageConfig;
   const { onFailure = 'null' } = options ?? {};
 
+  const storageObj = getStorageObject(storage);
+
   try {
-    const raw = localStorage.getItem(key);
+    const raw = storageObj.getItem(key);
 
     if (!raw) {
       return null;
@@ -59,7 +60,7 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
 }
 
 /**
- * 로컬 스토리지에 값을 저장합니다.
+ * 스토리지에 값을 저장합니다.
  *
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
@@ -67,24 +68,26 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
  * @returns {void}
  */
 function set<T>(storageConfig: SafeStorage<T>, data: T): void {
-  const { key } = storageConfig;
-  localStorage.setItem(key, JSON.stringify(data));
+  const { key, storage = 'local' } = storageConfig;
+  const storageObj = getStorageObject(storage);
+  storageObj.setItem(key, JSON.stringify(data));
 }
 
 /**
- * 로컬 스토리지에서 해당 키의 값을 제거합니다.
+ * 스토리지에서 해당 키의 값을 제거합니다.
  *
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
  * @returns {void}
  */
 function remove<T>(storageConfig: SafeStorage<T>): void {
-  const { key } = storageConfig;
-  localStorage.removeItem(key);
+  const { key, storage = 'local' } = storageConfig;
+  const storageObj = getStorageObject(storage);
+  storageObj.removeItem(key);
 }
 
 /**
- * 로컬 스토리지 값을 기본값(defaultValue)으로 초기화합니다.
+ * 스토리지 값을 기본값(defaultValue)으로 초기화합니다.
  * (존재 여부 확인 없이 무조건 덮어씀)
  *
  * @template T 저장되는 값의 타입
@@ -97,16 +100,34 @@ function init<T>(storageConfig: SafeStorage<T>): void {
 }
 
 /**
- * Zod 스키마 기반 타입 안전한 로컬 스토리지 유틸
+ * Zod 스키마 기반 타입 안전한 Web Storage 유틸
+ * localStorage와 sessionStorage를 지원합니다.
  *
  * @example
  * ```ts
- * import { CampaignTooltipViewedIdsStorage } from "@/storages/campaign";
+ * import { ss, safeStorage } from "@package/safe-storage";
+ * import { z } from "zod";
  *
- * safeStorage.set(CampaignTooltipViewedIdsStorage, [1, 2, 3]);
- * const ids = safeStorage.get(CampaignTooltipViewedIdsStorage);
- * safeStorage.remove(CampaignTooltipViewedIdsStorage);
- * safeStorage.init(CampaignTooltipViewedIdsStorage);
+ * // localStorage 사용 (기본)
+ * const LocalData = ss({
+ *   key: 'localData',
+ *   schema: z.array(z.number()),
+ *   defaultValue: []
+ * });
+ *
+ * // sessionStorage 사용
+ * const SessionData = ss({
+ *   key: 'sessionData',
+ *   schema: z.string(),
+ *   defaultValue: '',
+ *   storage: 'session'
+ * });
+ *
+ * safeStorage.set(LocalData, [1, 2, 3]);
+ * const ids = safeStorage.get(LocalData);
+ *
+ * safeStorage.set(SessionData, 'hello');
+ * const data = safeStorage.get(SessionData);
  * ```
  */
 export const safeStorage = { get, set, remove, init };
