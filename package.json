@@ -22,6 +22,10 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -35,12 +39,17 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm test && pnpm run build"
   },
   "keywords": [
-    "localstorage",
     "zod",
+    "storage",
+    "localstorage",
+    "sessionstorage",
+    "web-storage",
+    "browser-storage",
     "validation",
     "typescript",
     "type-safe",
     "runtime-validation",
+    "schema-validation",
     "react",
     "vue",
     "angular"
@@ -48,7 +57,7 @@
   "author": "YESHYUNGSEOK",
   "license": "MIT",
   "peerDependencies": {
-    "zod": "^3.22.0"
+    "zod": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
