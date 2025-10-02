@@ -1,4 +1,4 @@
-import { SafeStorage } from '@/types/storage';
+import { SafeStorage } from '@/types/safe-storage';
 
 /**
  * 로컬 스토리지에서 값을 가져옵니다.
