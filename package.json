@@ -1,7 +1,7 @@
 {
   "name": "zod-storage",
   "version": "0.1.0",
-  "description": "Type-safe Web Storage wrapper with Zod runtime validation",
+  "description": "Type-safe Browser Storage wrapper with Zod runtime validation",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
