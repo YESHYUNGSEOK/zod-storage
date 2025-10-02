@@ -2,14 +2,27 @@ import { SafeStorage } from '@/types/storage';
 
 /**
  * 로컬 스토리지에서 값을 가져옵니다.
- * - JSON parse 및 zod schema validation을 통과하지 못하면 defaultValue 반환
+ * - JSON parse 및 zod schema validation을 통과하지 못하면 strict 옵션에 따라 null 또는 defaultValue 반환
  *
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
  * @returns {T | null} 저장된 값. 값이 없으면 `null`, 잘못된 값이면 `defaultValue`
  */
-function get<T>(storageConfig: SafeStorage<T>): T | null {
+function get<T>(storageConfig: SafeStorage<T>): T | null;
+/**
+ * 로컬 스토리지에서 값을 가져옵니다.
+ * - JSON parse 및 zod schema validation을 통과하지 못하면 strict 옵션에 따라 null 또는 defaultValue 반환
+ *
+ * @template T 저장되는 값의 타입
+ * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
+ * @param {object} options - 선택적 옵션
+ * @param {boolean} options.strict - true일 경우 parse 실패 시 null 반환, false일 경우 defaultValue 반환 (기본값: false)
+ * @returns {T | null} 저장된 값. 값이 없으면 `null`, 잘못된 값이면 옵션에 따라 `defaultValue` 또는 `null`
+ */
+function get<T>(storageConfig: SafeStorage<T>, options: { strict?: boolean }): T | null;
+function get<T>(storageConfig: SafeStorage<T>, options?: { strict?: boolean }): T | null {
   const { key, value: schema, defaultValue } = storageConfig;
+  const { strict = false } = options ?? {};
 
   try {
     const raw = localStorage.getItem(key);
@@ -21,9 +34,9 @@ function get<T>(storageConfig: SafeStorage<T>): T | null {
     const parsed = JSON.parse(raw) as unknown;
     const result = schema.safeParse(parsed);
 
-    return result.success ? result.data : defaultValue;
+    return result.success ? result.data : strict ? null : defaultValue;
   } catch {
-    return defaultValue;
+    return strict ? null : defaultValue;
   }
 }
 
