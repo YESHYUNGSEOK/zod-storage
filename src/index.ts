@@ -1,2 +1,2 @@
-export { createLocalStorage } from './storage';
-export type { StorageOptions } from './storage';
+export { safeStorage } from './storage';
+export type { SafeStorage } from './types/storage';
