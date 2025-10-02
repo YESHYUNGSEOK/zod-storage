@@ -1,6 +1,6 @@
 {
   "name": "zod-browser-storage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Type-safe Browser Storage wrapper with Zod runtime validation",
   "authors": [
     {
