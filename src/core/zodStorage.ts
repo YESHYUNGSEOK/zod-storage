@@ -76,13 +76,13 @@ function set<T>(storageConfig: SafeStorage<T>, data: T): void {
 }
 
 /**
- * Removes a value from storage for the given key.
+ * Clears a value from storage for the given key.
  *
  * @template T The type of the stored value
  * @param {SafeStorage<T>} storageConfig - Storage configuration including key, schema, and defaultValue
  * @returns {void}
  */
-function remove<T>(storageConfig: SafeStorage<T>): void {
+function clear<T>(storageConfig: SafeStorage<T>): void {
   const { key, storage = 'local' } = storageConfig;
   const storageObj = getStorageObject(storage);
 
@@ -133,4 +133,4 @@ function init<T>(storageConfig: SafeStorage<T>): void {
  * const data = zodStorage.get(SessionData);
  * ```
  */
-export const zodStorage = { get, set, remove, init };
+export const zodStorage = { get, set, clear, init };

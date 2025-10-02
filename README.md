@@ -51,8 +51,8 @@ zodStorage.set(userStorage, {
 const user = zodStorage.get(userStorage);
 console.log(user); // { name: 'John Doe', age: 30, email: 'john@example.com' }
 
-// Remove data
-zodStorage.remove(userStorage);
+// Clear data
+zodStorage.clear(userStorage);
 ```
 
 ## API Reference
@@ -108,9 +108,9 @@ Stores validated data in storage.
 
 **Returns:** `void`
 
-### `zodStorage.remove(storage)`
+### `zodStorage.clear(storage)`
 
-Removes data from storage.
+Clears data from storage.
 
 **Parameters:**
 

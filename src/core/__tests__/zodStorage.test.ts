@@ -824,9 +824,9 @@ describe('zodStorage', () => {
       expect(zodStorage.get(storage)).toEqual([1, 2, 3]);
     });
 
-    it('should work with remove method', () => {
+    it('should work with clear method', () => {
       const storage = zs({
-        key: 'removeTest',
+        key: 'clearTest',
         schema: z.array(z.number()),
         defaultValue: [],
       });
@@ -834,7 +834,7 @@ describe('zodStorage', () => {
       zodStorage.set(storage, [1, 2, 3]);
       expect(zodStorage.get(storage)).toEqual([1, 2, 3]);
 
-      zodStorage.remove(storage);
+      zodStorage.clear(storage);
       expect(zodStorage.get(storage)).toBeNull();
     });
   });
@@ -1222,7 +1222,7 @@ describe('zodStorage', () => {
       expect(localStorage.getItem('sessionData')).toBeNull();
     });
 
-    it('should work with sessionStorage get/set/remove', () => {
+    it('should work with sessionStorage get/set/clear', () => {
       const storage = zs({
         key: 'sessionTest',
         schema: z.array(z.number()),
@@ -1233,7 +1233,7 @@ describe('zodStorage', () => {
       zodStorage.set(storage, [1, 2, 3]);
       expect(zodStorage.get(storage)).toEqual([1, 2, 3]);
 
-      zodStorage.remove(storage);
+      zodStorage.clear(storage);
       expect(zodStorage.get(storage)).toBeNull();
     });
 
