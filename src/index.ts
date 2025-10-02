@@ -1,6 +1,4 @@
-export { ss } from './core/ss';
-export { safeStorage } from './core/SafeStorage';
+export { zs } from './core/zs';
+export { zodStorage } from './core/zodStorage';
 
-export type { SafeStorage } from './types/ss.type';
-export type { SafeStorageGetOptions } from './types/safe-storage.type';
-export type { StorageType } from './types/storage.type';
+export type { SafeStorage, SafeStorageGetOptions, StorageType } from './types/type';

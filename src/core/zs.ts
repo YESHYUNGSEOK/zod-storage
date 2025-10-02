@@ -1,6 +1,5 @@
 import z, { ZodType } from 'zod';
-import { SafeStorage } from '@/types/ss.type';
-import { StorageType } from '../types/storage.type';
+import { SafeStorage, StorageType } from '@/types/type';
 
 /**
  * Creates a SafeStorage configuration object.
@@ -15,38 +14,38 @@ import { StorageType } from '../types/storage.type';
  *
  * @example
  * ```ts
- * import { ss, safeStorage } from '@package/safe-storage';
+ * import { zs, zodStorage } from 'zod-storage';
  * import { z } from 'zod';
  *
  * // Using localStorage (default)
- * const LocalData = ss({
+ * const LocalData = zs({
  *   key: 'localData',
  *   schema: z.array(z.number()),
  *   defaultValue: []
  * });
  *
  * // Using sessionStorage
- * const SessionData = ss({
+ * const SessionData = zs({
  *   key: 'sessionData',
  *   schema: z.string(),
  *   defaultValue: '',
  *   storage: 'session'
  * });
  *
- * safeStorage.set(LocalData, [1, 2, 3]);
- * const ids = safeStorage.get(LocalData);
+ * zodStorage.set(LocalData, [1, 2, 3]);
+ * const ids = zodStorage.get(LocalData);
  * ```
  */
-export function ss<Schema extends ZodType>(config: {
+export const zs = <Schema extends ZodType>(config: {
   key: string;
   schema: Schema;
   defaultValue: z.infer<Schema>;
   storage?: StorageType;
-}): SafeStorage<z.infer<Schema>> {
+}): SafeStorage<z.infer<Schema>> => {
   return {
     key: config.key,
     value: config.schema,
     defaultValue: config.defaultValue,
     storage: config.storage,
   };
-}
+};

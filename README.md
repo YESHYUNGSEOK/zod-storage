@@ -1,6 +1,8 @@
-# ss
+# zod-storage
 
 Type-safe Web Storage wrapper with Zod runtime validation for React, Vue, Angular, and vanilla JavaScript.
+
+> **Disclaimer:** This library is not affiliated with, endorsed by, or sponsored by the [Zod project](https://github.com/colinhacks/zod) or its creators. It is an independent utility that leverages Zod for runtime validation.
 
 ## Features
 
@@ -14,21 +16,21 @@ Type-safe Web Storage wrapper with Zod runtime validation for React, Vue, Angula
 ## Installation
 
 ```bash
-npm install ss zod
+npm install zod-storage zod
 # or
-pnpm add ss zod
+pnpm add zod-storage zod
 # or
-yarn add ss zod
+yarn add zod-storage zod
 ```
 
 ## Quick Start
 
 ```typescript
 import { z } from 'zod';
-import { ss, safeStorage } from 'ss';
+import { zs, zodStorage } from 'zod-storage';
 
 // Define your storage with schema
-const userStorage = ss({
+const userStorage = zs({
   key: 'user',
   schema: z.object({
     name: z.string(),
@@ -39,23 +41,23 @@ const userStorage = ss({
 });
 
 // Set data (automatically validated)
-safeStorage.set(userStorage, {
+zodStorage.set(userStorage, {
   name: 'John Doe',
   age: 30,
   email: 'john@example.com',
 });
 
 // Get data (returns typed data or null)
-const user = safeStorage.get(userStorage);
+const user = zodStorage.get(userStorage);
 console.log(user); // { name: 'John Doe', age: 30, email: 'john@example.com' }
 
 // Remove data
-safeStorage.remove(userStorage);
+zodStorage.remove(userStorage);
 ```
 
 ## API Reference
 
-### `ss(config)`
+### `zs(config)`
 
 Creates a storage configuration object.
 
@@ -68,7 +70,7 @@ Creates a storage configuration object.
 
 **Returns:** `SafeStorage<T>` configuration object
 
-### `safeStorage.get(storage, options?)`
+### `zodStorage.get(storage, options?)`
 
 Retrieves and validates data from storage.
 
@@ -86,16 +88,16 @@ Retrieves and validates data from storage.
 
 ```typescript
 // Return null on validation failure (default)
-const data = safeStorage.get(userStorage);
+const data = zodStorage.get(userStorage);
 
 // Return default value on validation failure
-const data = safeStorage.get(userStorage, { onFailure: 'default' });
+const data = zodStorage.get(userStorage, { onFailure: 'default' });
 
 // Throw error on validation failure
-const data = safeStorage.get(userStorage, { onFailure: 'throw' });
+const data = zodStorage.get(userStorage, { onFailure: 'throw' });
 ```
 
-### `safeStorage.set(storage, data)`
+### `zodStorage.set(storage, data)`
 
 Stores validated data in storage.
 
@@ -106,7 +108,7 @@ Stores validated data in storage.
 
 **Returns:** `void`
 
-### `safeStorage.remove(storage)`
+### `zodStorage.remove(storage)`
 
 Removes data from storage.
 
@@ -116,7 +118,7 @@ Removes data from storage.
 
 **Returns:** `void`
 
-### `safeStorage.init(storage)`
+### `zodStorage.init(storage)`
 
 Initializes storage with the default value.
 
@@ -132,21 +134,21 @@ Initializes storage with the default value.
 
 ```typescript
 // Number array
-const numbersStorage = ss({
+const numbersStorage = zs({
   key: 'numbers',
   schema: z.array(z.number()),
   defaultValue: []
 });
 
 // String
-const nameStorage = ss({
+const nameStorage = zs({
   key: 'name',
   schema: z.string(),
   defaultValue: ''
 });
 
 // Boolean
-const flagStorage = ss({
+const flagStorage = zs({
   key: 'flag',
   schema: z.boolean(),
   defaultValue: false
@@ -156,13 +158,13 @@ const flagStorage = ss({
 ### Enum Types
 
 ```typescript
-const themeStorage = ss({
+const themeStorage = zs({
   key: 'theme',
   schema: z.enum(['light', 'dark', 'auto']),
   defaultValue: 'light'
 });
 
-safeStorage.set(themeStorage, 'dark');
+zodStorage.set(themeStorage, 'dark');
 ```
 
 ### Complex Objects
@@ -179,7 +181,7 @@ const profileSchema = z.object({
   }),
 });
 
-const profileStorage = ss({
+const profileStorage = zs({
   key: 'profile',
   schema: profileSchema,
   defaultValue: {
@@ -192,14 +194,14 @@ const profileStorage = ss({
 ### SessionStorage
 
 ```typescript
-const sessionData = ss({
+const sessionData = zs({
   key: 'tempData',
   schema: z.string(),
   defaultValue: '',
   storage: 'session' // Use sessionStorage instead of localStorage
 });
 
-safeStorage.set(sessionData, 'temporary value');
+zodStorage.set(sessionData, 'temporary value');
 ```
 
 ### React Integration
@@ -207,14 +209,14 @@ safeStorage.set(sessionData, 'temporary value');
 ```typescript
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { ss, safeStorage } from 'ss';
+import { zs, zodStorage } from 'zod-storage';
 
 const settingsSchema = z.object({
   notifications: z.boolean(),
   theme: z.enum(['light', 'dark']),
 });
 
-const settingsStorage = ss({
+const settingsStorage = zs({
   key: 'settings',
   schema: settingsSchema,
   defaultValue: { notifications: true, theme: 'light' }
@@ -222,11 +224,11 @@ const settingsStorage = ss({
 
 function useSettings() {
   const [settings, setSettings] = useState(() =>
-    safeStorage.get(settingsStorage) ?? settingsStorage.defaultValue
+    zodStorage.get(settingsStorage) ?? settingsStorage.defaultValue
   );
 
   useEffect(() => {
-    safeStorage.set(settingsStorage, settings);
+    zodStorage.set(settingsStorage, settings);
   }, [settings]);
 
   return [settings, setSettings] as const;
@@ -239,23 +241,23 @@ function useSettings() {
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { z } from 'zod';
-import { ss, safeStorage } from 'ss';
+import { zs, zodStorage } from 'zod-storage';
 
 const userSchema = z.object({
   name: z.string(),
   age: z.number(),
 });
 
-const userStorage = ss({
+const userStorage = zs({
   key: 'user',
   schema: userSchema,
   defaultValue: { name: '', age: 0 }
 });
 
-const user = ref(safeStorage.get(userStorage) ?? userStorage.defaultValue);
+const user = ref(zodStorage.get(userStorage) ?? userStorage.defaultValue);
 
 watch(user, (newUser) => {
-  safeStorage.set(userStorage, newUser);
+  zodStorage.set(userStorage, newUser);
 }, { deep: true });
 </script>
 ```
@@ -263,7 +265,7 @@ watch(user, (newUser) => {
 ### Error Handling
 
 ```typescript
-const dataStorage = ss({
+const dataStorage = zs({
   key: 'data',
   schema: z.array(z.number()),
   defaultValue: [1, 2, 3]
@@ -273,16 +275,16 @@ const dataStorage = ss({
 localStorage.setItem('data', 'invalid json');
 
 // Returns null (default behavior)
-const result1 = safeStorage.get(dataStorage);
+const result1 = zodStorage.get(dataStorage);
 console.log(result1); // null
 
 // Returns default value
-const result2 = safeStorage.get(dataStorage, { onFailure: 'default' });
+const result2 = zodStorage.get(dataStorage, { onFailure: 'default' });
 console.log(result2); // [1, 2, 3]
 
 // Throws error
 try {
-  const result3 = safeStorage.get(dataStorage, { onFailure: 'throw' });
+  const result3 = zodStorage.get(dataStorage, { onFailure: 'throw' });
 } catch (error) {
   console.error('Validation failed:', error);
 }
@@ -292,28 +294,28 @@ try {
 
 ```typescript
 // Email validation
-const emailStorage = ss({
+const emailStorage = zs({
   key: 'email',
   schema: z.string().email(),
   defaultValue: ''
 });
 
 // Number constraints
-const ageStorage = ss({
+const ageStorage = zs({
   key: 'age',
   schema: z.number().min(0).max(120),
   defaultValue: 0
 });
 
 // Pattern matching
-const codeStorage = ss({
+const codeStorage = zs({
   key: 'code',
   schema: z.string().regex(/^[A-Z]{3}-\d{3}$/),
   defaultValue: ''
 });
 
 // Transformed values
-const upperCaseStorage = ss({
+const upperCaseStorage = zs({
   key: 'name',
   schema: z.string().transform(val => val.toUpperCase()),
   defaultValue: ''
@@ -325,53 +327,53 @@ const upperCaseStorage = ss({
 The library is written in TypeScript and provides full type safety:
 
 ```typescript
-import { SafeStorage, SafeStorageGetOptions, StorageType } from 'ss';
+import { SafeStorage, SafeStorageGetOptions, StorageType } from 'zod-storage';
 
 // All types are automatically inferred
-const storage = ss({
+const userStorage = zs({
   key: 'data',
   schema: z.object({ id: z.number(), name: z.string() }),
   defaultValue: { id: 0, name: '' }
 });
 
 // TypeScript knows the exact type
-const data = safeStorage.get(storage); // { id: number, name: string } | null
+const data = zodStorage.get(userStorage); // { id: number, name: string } | null
 ```
 
-## Why ss?
+## Why zod-storage?
 
 ### Data Integrity
 
 Without validation, localStorage can contain corrupted or invalid data:
 
 ```typescript
-// Without ss - No type safety
+// Without zod-storage - No type safety
 localStorage.setItem('user', JSON.stringify({ id: '123' })); // Wrong type!
 const user = JSON.parse(localStorage.getItem('user')!);
 console.log(user.id + 1); // "1231" - String concatenation bug!
 
-// With ss - Runtime validation catches errors
-const userStorage = ss({
+// With zod-storage - Runtime validation catches errors
+const userStorage = zs({
   key: 'user',
   schema: z.object({ id: z.number() }),
   defaultValue: { id: 0 }
 });
 
-const user = safeStorage.get(userStorage); // null (validation failed)
-const safeUser = safeStorage.get(userStorage, { onFailure: 'default' }); // { id: 0 }
+const user = zodStorage.get(userStorage); // null (validation failed)
+const safeUser = zodStorage.get(userStorage, { onFailure: 'default' }); // { id: 0 }
 ```
 
 ### Type Safety
 
 ```typescript
-const storage = ss({
+const countStorage = zs({
   key: 'count',
   schema: z.number(),
   defaultValue: 0
 });
 
-safeStorage.set(storage, 'invalid'); // TypeScript error!
-safeStorage.set(storage, 42); // OK
+zodStorage.set(countStorage, 'invalid'); // TypeScript error!
+zodStorage.set(countStorage, 42); // OK
 ```
 
 ### Framework Agnostic
@@ -388,5 +390,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Repository
 
-- GitHub: [https://github.com/YESHYUNGSEOK/ss](https://github.com/YESHYUNGSEOK/ss)
-- Issues: [https://github.com/YESHYUNGSEOK/ss/issues](https://github.com/YESHYUNGSEOK/ss/issues)
+- GitHub: [https://github.com/YESHYUNGSEOK/zod-storage](https://github.com/YESHYUNGSEOK/zod-storage)
+- Issues: [https://github.com/YESHYUNGSEOK/zod-storage/issues](https://github.com/YESHYUNGSEOK/zod-storage/issues)

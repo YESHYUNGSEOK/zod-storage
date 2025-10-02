@@ -1,5 +1,4 @@
-import { SafeStorage } from '@/types/ss.type';
-import { SafeStorageGetOptions } from '../types/safe-storage.type';
+import { SafeStorage, SafeStorageGetOptions } from '@/types/type';
 import { getStorageObject } from '../utils/getStorageObject';
 
 /**
@@ -41,14 +40,14 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
       return result.data;
     }
 
-    // ❌ Zod validation failed
+    // Zod validation failed
     if (onFailure === 'throw') {
       throw result.error;
     }
 
     return onFailure === 'default' ? defaultValue : null;
   } catch (err) {
-    // ❌ JSON.parse or other runtime error
+    // JSON.parse or other runtime error
     if (onFailure === 'throw') {
       if (err instanceof Error) {
         throw new Error(`SafeStorage parsing error: ${err.message}`);
@@ -109,29 +108,29 @@ function init<T>(storageConfig: SafeStorage<T>): void {
  *
  * @example
  * ```ts
- * import { ss, safeStorage } from "@package/safe-storage";
+ * import { zs, zodStorage } from "zod-storage";
  * import { z } from "zod";
  *
  * // Using localStorage (default)
- * const LocalData = ss({
+ * const LocalData = zs({
  *   key: 'localData',
  *   schema: z.array(z.number()),
  *   defaultValue: []
  * });
  *
  * // Using sessionStorage
- * const SessionData = ss({
+ * const SessionData = zs({
  *   key: 'sessionData',
  *   schema: z.string(),
  *   defaultValue: '',
  *   storage: 'session'
  * });
  *
- * safeStorage.set(LocalData, [1, 2, 3]);
- * const ids = safeStorage.get(LocalData);
+ * zodStorage.set(LocalData, [1, 2, 3]);
+ * const ids = zodStorage.get(LocalData);
  *
- * safeStorage.set(SessionData, 'hello');
- * const data = safeStorage.get(SessionData);
+ * zodStorage.set(SessionData, 'hello');
+ * const data = zodStorage.get(SessionData);
  * ```
  */
-export const safeStorage = { get, set, remove, init };
+export const zodStorage = { get, set, remove, init };
