@@ -53,8 +53,10 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
       if (err instanceof Error) {
         throw new Error(`SafeStorage parsing error: ${err.message}`);
       }
+
       throw new Error('SafeStorage: Unknown error');
     }
+
     return onFailure === 'default' ? defaultValue : null;
   }
 }
@@ -70,6 +72,7 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
 function set<T>(storageConfig: SafeStorage<T>, data: T): void {
   const { key, storage = 'local' } = storageConfig;
   const storageObj = getStorageObject(storage);
+
   storageObj.setItem(key, JSON.stringify(data));
 }
 
@@ -83,6 +86,7 @@ function set<T>(storageConfig: SafeStorage<T>, data: T): void {
 function remove<T>(storageConfig: SafeStorage<T>): void {
   const { key, storage = 'local' } = storageConfig;
   const storageObj = getStorageObject(storage);
+
   storageObj.removeItem(key);
 }
 
