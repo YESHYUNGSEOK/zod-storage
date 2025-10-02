@@ -34,9 +34,24 @@ function get<T>(storageConfig: SafeStorage<T>, options?: { strict?: boolean }): 
     const parsed = JSON.parse(raw) as unknown;
     const result = schema.safeParse(parsed);
 
-    return result.success ? result.data : strict ? null : defaultValue;
+    if (result.success) {
+      return result.data;
+    }
+
+    // 파싱 실패 시
+    // defaultValue가 없거나 strict 모드면 null 반환
+    if (defaultValue === undefined || strict) {
+      return null;
+    }
+
+    return defaultValue;
   } catch {
-    return strict ? null : defaultValue;
+    // JSON 파싱 실패 시
+    if (defaultValue === undefined || strict) {
+      return null;
+    }
+
+    return defaultValue;
   }
 }
 
@@ -72,9 +87,15 @@ function remove<T>(storageConfig: SafeStorage<T>): void {
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
  * @returns {void}
+ * @throws {Error} defaultValue가 없으면 에러 발생
  */
 function init<T>(storageConfig: SafeStorage<T>): void {
   const { defaultValue } = storageConfig;
+
+  if (defaultValue === undefined) {
+    throw new Error(`Cannot init storage "${storageConfig.key}": defaultValue is not provided`);
+  }
+
   set(storageConfig, defaultValue);
 }
 

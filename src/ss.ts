@@ -1,69 +1,66 @@
-import { z, ZodType } from 'zod';
+import z, { ZodType } from 'zod';
 import { SafeStorage } from './types';
 
 /**
- * SafeStorage config 객체를 생성합니다.
+ * SafeStorage config 객체를 생성합니다 (defaultValue 있음).
  *
- * @template T 저장되는 값의 타입
+ * @template Schema zod schema 타입
  * @param {object} config - 스토리지 설정
  * @param {string} config.key - 로컬 스토리지 key
- * @param {T} config.defaultValue - 기본값
- * @returns {SafeStorage<T>} SafeStorage config 객체
+ * @param {Schema} config.schema - zod schema
+ * @param {z.infer<Schema>} config.defaultValue - 기본값
+ * @returns {SafeStorage<z.infer<Schema>>} SafeStorage config 객체
+ */
+export function ss<Schema extends ZodType>(config: {
+  key: string;
+  schema: Schema;
+  defaultValue: z.infer<Schema>;
+}): SafeStorage<z.infer<Schema>>;
+
+/**
+ * SafeStorage config 객체를 생성합니다 (defaultValue 없음).
+ *
+ * @template Schema zod schema 타입
+ * @param {object} config - 스토리지 설정
+ * @param {string} config.key - 로컬 스토리지 key
+ * @param {Schema} config.schema - zod schema
+ * @returns {SafeStorage<z.infer<Schema>>} SafeStorage config 객체
  *
  * @example
  * ```ts
  * import { ss, safeStorage } from '@package/safe-storage';
+ * import { z } from 'zod';
  *
- * const CampaignReviewTooltipStorage = ss<number[]>({
- *   key: 'campaignReviewTooltipViewedIds',
+ * // defaultValue 있음 - 파싱 실패 시 defaultValue 반환
+ * const WithDefault = ss({
+ *   key: 'withDefault',
+ *   schema: z.array(z.number()),
  *   defaultValue: []
  * });
  *
- * safeStorage.set(CampaignReviewTooltipStorage, [1, 2, 3]);
- * const ids = safeStorage.get(CampaignReviewTooltipStorage);
- * safeStorage.remove(CampaignReviewTooltipStorage);
- * safeStorage.init(CampaignReviewTooltipStorage);
+ * // defaultValue 없음 - 파싱 실패 시 무조건 null 반환
+ * const WithoutDefault = ss({
+ *   key: 'withoutDefault',
+ *   schema: z.enum(['Man', 'Woman', 'Other'])
+ * });
+ *
+ * safeStorage.set(WithDefault, [1, 2, 3]);
+ * const ids = safeStorage.get(WithDefault);
  * ```
  */
-export function ss<T>(config: { key: string; defaultValue: T }): SafeStorage<T> {
-  const schema = inferSchema(config.defaultValue);
+export function ss<Schema extends ZodType>(config: {
+  key: string;
+  schema: Schema;
+}): SafeStorage<z.infer<Schema>>;
+
+export function ss<Schema extends ZodType>(config: {
+  key: string;
+  schema: Schema;
+  defaultValue?: z.infer<Schema>;
+}): SafeStorage<z.infer<Schema>> {
   return {
     key: config.key,
-    value: schema,
+    value: config.schema,
     defaultValue: config.defaultValue,
   };
-}
-
-/**
- * defaultValue로부터 zod schema를 자동 추론합니다.
- */
-function inferSchema<T>(defaultValue: T): ZodType<T> {
-  if (Array.isArray(defaultValue)) {
-    if (defaultValue.length === 0) {
-      return z.array(z.unknown()) as unknown as ZodType<T>;
-    }
-
-    const firstItem: unknown = defaultValue[0];
-
-    return z.array(inferSchema(firstItem)) as unknown as ZodType<T>;
-  }
-
-  if (defaultValue !== null && typeof defaultValue === 'object') {
-    const shape: Record<string, ZodType<unknown>> = {};
-    for (const key in defaultValue) {
-      shape[key] = inferSchema(defaultValue[key]);
-    }
-    return z.object(shape) as unknown as ZodType<T>;
-  }
-
-  switch (typeof defaultValue) {
-    case 'string':
-      return z.string() as unknown as ZodType<T>;
-    case 'number':
-      return z.number() as unknown as ZodType<T>;
-    case 'boolean':
-      return z.boolean() as unknown as ZodType<T>;
-    default:
-      return z.unknown() as unknown as ZodType<T>;
-  }
 }

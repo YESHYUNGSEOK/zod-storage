@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { z } from 'zod';
 import { ss } from '../ss';
 import { safeStorage } from '../safe-storage';
 
@@ -9,8 +10,9 @@ describe('ss function', () => {
 
   describe('primitive types', () => {
     it('should work with number array', () => {
-      const storage = ss<number[]>({
+      const storage = ss({
         key: 'numbers',
+        schema: z.array(z.number()),
         defaultValue: [],
       });
 
@@ -19,8 +21,9 @@ describe('ss function', () => {
     });
 
     it('should work with string array', () => {
-      const storage = ss<string[]>({
+      const storage = ss({
         key: 'strings',
+        schema: z.array(z.string()),
         defaultValue: [],
       });
 
@@ -29,8 +32,9 @@ describe('ss function', () => {
     });
 
     it('should work with boolean', () => {
-      const storage = ss<boolean>({
+      const storage = ss({
         key: 'flag',
+        schema: z.boolean(),
         defaultValue: false,
       });
 
@@ -39,8 +43,9 @@ describe('ss function', () => {
     });
 
     it('should work with number', () => {
-      const storage = ss<number>({
+      const storage = ss({
         key: 'count',
+        schema: z.number(),
         defaultValue: 0,
       });
 
@@ -49,8 +54,9 @@ describe('ss function', () => {
     });
 
     it('should work with string', () => {
-      const storage = ss<string>({
+      const storage = ss({
         key: 'name',
+        schema: z.string(),
         defaultValue: '',
       });
 
@@ -59,16 +65,64 @@ describe('ss function', () => {
     });
   });
 
+  describe('enum and union types', () => {
+    it('should work with z.enum', () => {
+      const storage = ss({
+        key: 'theme',
+        schema: z.enum(['light', 'dark', 'auto']),
+        defaultValue: 'light',
+      });
+
+      safeStorage.set(storage, 'dark');
+      expect(safeStorage.get(storage)).toBe('dark');
+    });
+
+    it('should reject invalid enum value when corrupted', () => {
+      const storage = ss({
+        key: 'theme',
+        schema: z.enum(['light', 'dark', 'auto']),
+        defaultValue: 'light',
+      });
+
+      // 사용자가 직접 localStorage를 오염시킨 경우
+      localStorage.setItem('theme', JSON.stringify('invalid'));
+      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+    });
+
+    it('should return defaultValue when enum value is invalid (non-strict mode)', () => {
+      const storage = ss({
+        key: 'theme',
+        schema: z.enum(['light', 'dark', 'auto']),
+        defaultValue: 'light',
+      });
+
+      localStorage.setItem('theme', JSON.stringify('invalid'));
+      expect(safeStorage.get(storage)).toBe('light');
+    });
+
+    it('should work with numeric enum', () => {
+      const storage = ss({
+        key: 'status',
+        schema: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+        defaultValue: 0,
+      });
+
+      safeStorage.set(storage, 2);
+      expect(safeStorage.get(storage)).toBe(2);
+    });
+  });
+
   describe('custom types', () => {
     it('should work with custom object type', () => {
-      type User = {
-        id: number;
-        name: string;
-        email: string;
-      };
+      const userSchema = z.object({
+        id: z.number(),
+        name: z.string(),
+        email: z.string(),
+      });
 
-      const storage = ss<User>({
+      const storage = ss({
         key: 'user',
+        schema: userSchema,
         defaultValue: {
           id: 0,
           name: '',
@@ -76,7 +130,7 @@ describe('ss function', () => {
         },
       });
 
-      const user: User = {
+      const user = {
         id: 1,
         name: 'John',
         email: 'john@example.com',
@@ -86,20 +140,68 @@ describe('ss function', () => {
       expect(safeStorage.get(storage)).toEqual(user);
     });
 
-    it('should work with nested object type', () => {
-      type Profile = {
-        user: {
-          id: number;
-          name: string;
-        };
-        settings: {
-          theme: string;
-          notifications: boolean;
-        };
-      };
+    it('should reject invalid object when corrupted', () => {
+      const userSchema = z.object({
+        id: z.number(),
+        name: z.string(),
+        email: z.string(),
+      });
 
-      const storage = ss<Profile>({
+      const storage = ss({
+        key: 'user',
+        schema: userSchema,
+        defaultValue: {
+          id: 0,
+          name: '',
+          email: '',
+        },
+      });
+
+      // 필수 필드 누락
+      localStorage.setItem('user', JSON.stringify({ id: 1 }));
+      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+    });
+
+    it('should return defaultValue when object is invalid (non-strict mode)', () => {
+      const userSchema = z.object({
+        id: z.number(),
+        name: z.string(),
+        email: z.string(),
+      });
+
+      const storage = ss({
+        key: 'user',
+        schema: userSchema,
+        defaultValue: {
+          id: 0,
+          name: '',
+          email: '',
+        },
+      });
+
+      localStorage.setItem('user', JSON.stringify({ id: 1 }));
+      expect(safeStorage.get(storage)).toEqual({
+        id: 0,
+        name: '',
+        email: '',
+      });
+    });
+
+    it('should work with nested object type', () => {
+      const profileSchema = z.object({
+        user: z.object({
+          id: z.number(),
+          name: z.string(),
+        }),
+        settings: z.object({
+          theme: z.string(),
+          notifications: z.boolean(),
+        }),
+      });
+
+      const storage = ss({
         key: 'profile',
+        schema: profileSchema,
         defaultValue: {
           user: {
             id: 0,
@@ -112,7 +214,7 @@ describe('ss function', () => {
         },
       });
 
-      const profile: Profile = {
+      const profile = {
         user: {
           id: 1,
           name: 'John',
@@ -128,18 +230,21 @@ describe('ss function', () => {
     });
 
     it('should work with array of custom objects', () => {
-      type Task = {
-        id: number;
-        title: string;
-        completed: boolean;
-      };
+      const taskSchema = z.array(
+        z.object({
+          id: z.number(),
+          title: z.string(),
+          completed: z.boolean(),
+        })
+      );
 
-      const storage = ss<Task[]>({
+      const storage = ss({
         key: 'tasks',
+        schema: taskSchema,
         defaultValue: [],
       });
 
-      const tasks: Task[] = [
+      const tasks = [
         { id: 1, title: 'Task 1', completed: false },
         { id: 2, title: 'Task 2', completed: true },
       ];
@@ -147,104 +252,50 @@ describe('ss function', () => {
       safeStorage.set(storage, tasks);
       expect(safeStorage.get(storage)).toEqual(tasks);
     });
-  });
 
-  describe('enum types', () => {
-    it('should work with string enum', () => {
-      enum Theme {
-        Light = 'light',
-        Dark = 'dark',
-        Auto = 'auto',
-      }
+    it('should reject invalid array items when corrupted', () => {
+      const taskSchema = z.array(
+        z.object({
+          id: z.number(),
+          title: z.string(),
+          completed: z.boolean(),
+        })
+      );
 
-      const storage = ss<Theme>({
-        key: 'theme',
-        defaultValue: Theme.Light,
-      });
-
-      safeStorage.set(storage, Theme.Dark);
-      expect(safeStorage.get(storage)).toBe(Theme.Dark);
-    });
-
-    it('should work with numeric enum', () => {
-      enum Status {
-        Pending = 0,
-        InProgress = 1,
-        Completed = 2,
-      }
-
-      const storage = ss<Status>({
-        key: 'status',
-        defaultValue: Status.Pending,
-      });
-
-      safeStorage.set(storage, Status.Completed);
-      expect(safeStorage.get(storage)).toBe(Status.Completed);
-    });
-
-    it('should work with array of enums', () => {
-      enum Color {
-        Red = 'red',
-        Green = 'green',
-        Blue = 'blue',
-      }
-
-      const storage = ss<Color[]>({
-        key: 'colors',
+      const storage = ss({
+        key: 'tasks',
+        schema: taskSchema,
         defaultValue: [],
       });
 
-      const colors: Color[] = [Color.Red, Color.Blue];
-      safeStorage.set(storage, colors);
-      expect(safeStorage.get(storage)).toEqual(colors);
-    });
+      // 잘못된 타입의 아이템 포함
+      localStorage.setItem(
+        'tasks',
+        JSON.stringify([
+          { id: 1, title: 'Task 1', completed: false },
+          { id: 'invalid', title: 'Task 2', completed: true },
+        ])
+      );
 
-    it('should work with object containing enums', () => {
-      enum Role {
-        Admin = 'admin',
-        User = 'user',
-        Guest = 'guest',
-      }
-
-      type UserWithRole = {
-        id: number;
-        name: string;
-        role: Role;
-      };
-
-      const storage = ss<UserWithRole>({
-        key: 'userWithRole',
-        defaultValue: {
-          id: 0,
-          name: '',
-          role: Role.Guest,
-        },
-      });
-
-      const user: UserWithRole = {
-        id: 1,
-        name: 'John',
-        role: Role.Admin,
-      };
-
-      safeStorage.set(storage, user);
-      expect(safeStorage.get(storage)).toEqual(user);
+      expect(safeStorage.get(storage, { strict: true })).toBeNull();
     });
   });
 
   describe('edge cases', () => {
     it('should return null when key does not exist', () => {
-      const storage = ss<number[]>({
+      const storage = ss({
         key: 'nonexistent',
+        schema: z.array(z.number()),
         defaultValue: [],
       });
 
       expect(safeStorage.get(storage)).toBeNull();
     });
 
-    it('should return defaultValue when stored value is invalid (non-strict mode)', () => {
-      const storage = ss<number[]>({
+    it('should return defaultValue when stored value is invalid JSON (non-strict mode)', () => {
+      const storage = ss({
         key: 'invalid',
+        schema: z.array(z.number()),
         defaultValue: [1, 2, 3],
       });
 
@@ -252,9 +303,10 @@ describe('ss function', () => {
       expect(safeStorage.get(storage)).toEqual([1, 2, 3]);
     });
 
-    it('should return null when stored value is invalid (strict mode)', () => {
-      const storage = ss<number[]>({
+    it('should return null when stored value is invalid JSON (strict mode)', () => {
+      const storage = ss({
         key: 'invalid',
+        schema: z.array(z.number()),
         defaultValue: [1, 2, 3],
       });
 
@@ -262,9 +314,34 @@ describe('ss function', () => {
       expect(safeStorage.get(storage, { strict: true })).toBeNull();
     });
 
+    it('should reject wrong type when corrupted (string instead of number)', () => {
+      const storage = ss({
+        key: 'count',
+        schema: z.number(),
+        defaultValue: 0,
+      });
+
+      localStorage.setItem('count', JSON.stringify('not a number'));
+      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+      expect(safeStorage.get(storage)).toBe(0);
+    });
+
+    it('should reject wrong array element type when corrupted', () => {
+      const storage = ss({
+        key: 'numbers',
+        schema: z.array(z.number()),
+        defaultValue: [],
+      });
+
+      localStorage.setItem('numbers', JSON.stringify([1, 2, 'three', 4]));
+      expect(safeStorage.get(storage, { strict: true })).toBeNull();
+      expect(safeStorage.get(storage)).toEqual([]);
+    });
+
     it('should work with empty array defaultValue', () => {
-      const storage = ss<number[]>({
+      const storage = ss({
         key: 'empty',
+        schema: z.array(z.number()),
         defaultValue: [],
       });
 
@@ -273,20 +350,21 @@ describe('ss function', () => {
     });
 
     it('should work with complex union types', () => {
-      type ComplexType = {
-        id: number;
-        data: string | number | boolean;
-      };
+      const complexSchema = z.object({
+        id: z.number(),
+        data: z.union([z.string(), z.number(), z.boolean()]),
+      });
 
-      const storage = ss<ComplexType>({
+      const storage = ss({
         key: 'complex',
+        schema: complexSchema,
         defaultValue: {
           id: 0,
           data: '',
         },
       });
 
-      const value: ComplexType = {
+      const value = {
         id: 1,
         data: 'test',
       };
@@ -298,8 +376,9 @@ describe('ss function', () => {
 
   describe('safeStorage methods', () => {
     it('should work with init method', () => {
-      const storage = ss<number[]>({
+      const storage = ss({
         key: 'initTest',
+        schema: z.array(z.number()),
         defaultValue: [1, 2, 3],
       });
 
@@ -308,8 +387,9 @@ describe('ss function', () => {
     });
 
     it('should work with remove method', () => {
-      const storage = ss<number[]>({
+      const storage = ss({
         key: 'removeTest',
+        schema: z.array(z.number()),
         defaultValue: [],
       });
 
