@@ -1,4 +1,4 @@
-# zod-storage
+# zod-browser-storage
 
 Type-safe Web Storage wrapper with Zod runtime validation for React, Vue, Angular, and vanilla JavaScript.
 
@@ -16,18 +16,18 @@ Type-safe Web Storage wrapper with Zod runtime validation for React, Vue, Angula
 ## Installation
 
 ```bash
-npm install zod-storage zod
+npm install zod-browser-storage zod
 # or
-pnpm add zod-storage zod
+pnpm add zod-browser-storage zod
 # or
-yarn add zod-storage zod
+yarn add zod-browser-storage zod
 ```
 
 ## Quick Start
 
 ```typescript
 import { z } from 'zod';
-import { zs, zodStorage } from 'zod-storage';
+import { zs, zodStorage } from 'zod-browser-storage';
 
 // Define your storage with schema
 const userStorage = zs({
@@ -209,7 +209,7 @@ zodStorage.set(sessionData, 'temporary value');
 ```typescript
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { zs, zodStorage } from 'zod-storage';
+import { zs, zodStorage } from 'zod-browser-storage';
 
 const settingsSchema = z.object({
   notifications: z.boolean(),
@@ -241,7 +241,7 @@ function useSettings() {
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { z } from 'zod';
-import { zs, zodStorage } from 'zod-storage';
+import { zs, zodStorage } from 'zod-browser-storage';
 
 const userSchema = z.object({
   name: z.string(),
@@ -327,7 +327,7 @@ const upperCaseStorage = zs({
 The library is written in TypeScript and provides full type safety:
 
 ```typescript
-import { SafeStorage, SafeStorageGetOptions, StorageType } from 'zod-storage';
+import { SafeStorage, SafeStorageGetOptions, StorageType } from 'zod-browser-storage';
 
 // All types are automatically inferred
 const userStorage = zs({
@@ -340,19 +340,19 @@ const userStorage = zs({
 const data = zodStorage.get(userStorage); // { id: number, name: string } | null
 ```
 
-## Why zod-storage?
+## Why zod-browser-storage?
 
 ### Data Integrity
 
 Without validation, localStorage can contain corrupted or invalid data:
 
 ```typescript
-// Without zod-storage - No type safety
+// Without zod-browser-storage - No type safety
 localStorage.setItem('user', JSON.stringify({ id: '123' })); // Wrong type!
 const user = JSON.parse(localStorage.getItem('user')!);
 console.log(user.id + 1); // "1231" - String concatenation bug!
 
-// With zod-storage - Runtime validation catches errors
+// With zod-browser-storage - Runtime validation catches errors
 const userStorage = zs({
   key: 'user',
   schema: z.object({ id: z.number() }),
@@ -390,5 +390,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Repository
 
-- GitHub: [https://github.com/YESHYUNGSEOK/zod-storage](https://github.com/YESHYUNGSEOK/zod-storage)
-- Issues: [https://github.com/YESHYUNGSEOK/zod-storage/issues](https://github.com/YESHYUNGSEOK/zod-storage/issues)
+- GitHub: [https://github.com/YESHYUNGSEOK/zod-browser-storage](https://github.com/YESHYUNGSEOK/zod-browser-storage)
+- Issues: [https://github.com/YESHYUNGSEOK/zod-browser-storage/issues](https://github.com/YESHYUNGSEOK/zod-browser-storage/issues)
