@@ -3,29 +3,29 @@ import { SafeStorage } from '@/types/ss.type';
 import { StorageType } from '../types/storage.type';
 
 /**
- * SafeStorage config 객체를 생성합니다.
+ * Creates a SafeStorage configuration object.
  *
- * @template Schema zod schema 타입
- * @param {object} config - 스토리지 설정
- * @param {string} config.key - 스토리지 key
- * @param {Schema} config.schema - zod schema
- * @param {z.infer<Schema>} config.defaultValue - 기본값
- * @param {StorageType} config.storage - 스토리지 타입 (기본값: "local")
- * @returns {SafeStorage<z.infer<Schema>>} SafeStorage config 객체
+ * @template Schema The Zod schema type
+ * @param {object} config - Storage configuration
+ * @param {string} config.key - Storage key
+ * @param {Schema} config.schema - Zod schema
+ * @param {z.infer<Schema>} config.defaultValue - Default value
+ * @param {StorageType} config.storage - Storage type (default: "local")
+ * @returns {SafeStorage<z.infer<Schema>>} SafeStorage configuration object
  *
  * @example
  * ```ts
  * import { ss, safeStorage } from '@package/safe-storage';
  * import { z } from 'zod';
  *
- * // localStorage 사용 (기본)
+ * // Using localStorage (default)
  * const LocalData = ss({
  *   key: 'localData',
  *   schema: z.array(z.number()),
  *   defaultValue: []
  * });
  *
- * // sessionStorage 사용
+ * // Using sessionStorage
  * const SessionData = ss({
  *   key: 'sessionData',
  *   schema: z.string(),

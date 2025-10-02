@@ -84,7 +84,7 @@ describe('ss function', () => {
         defaultValue: 'light',
       });
 
-      // 사용자가 직접 localStorage를 오염시킨 경우
+      // User manually corrupted localStorage
       localStorage.setItem('theme', JSON.stringify('invalid'));
       expect(safeStorage.get(storage)).toBeNull();
     });
@@ -157,7 +157,7 @@ describe('ss function', () => {
         },
       });
 
-      // 필수 필드 누락
+      // Missing required fields
       localStorage.setItem('user', JSON.stringify({ id: 1 }));
       expect(safeStorage.get(storage)).toBeNull();
     });
@@ -268,7 +268,7 @@ describe('ss function', () => {
         defaultValue: [],
       });
 
-      // 잘못된 타입의 아이템 포함
+      // Contains items with incorrect type
       localStorage.setItem(
         'tasks',
         JSON.stringify([
@@ -852,14 +852,14 @@ describe('ss function', () => {
         defaultValue: { id: 0, name: '', age: 0, isActive: false },
       });
 
-      // 사용자가 개발자 도구로 타입을 바꿈
+      // User changed types via developer tools
       localStorage.setItem(
         'user-profile',
         JSON.stringify({
-          id: '123', // number여야 하는데 string
+          id: '123', // should be number but is string
           name: 'John',
-          age: '25', // number여야 하는데 string
-          isActive: 'true', // boolean이어야 하는데 string
+          age: '25', // should be number but is string
+          isActive: 'true', // should be boolean but is string
         })
       );
 
@@ -879,7 +879,7 @@ describe('ss function', () => {
         defaultValue: [],
       });
 
-      // 사용자가 개발자 도구로 잘못된 값 추가
+      // User added invalid values via developer tools
       localStorage.setItem('scores', JSON.stringify([100, 95, '80', 75, null, 60]));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -897,7 +897,7 @@ describe('ss function', () => {
         defaultValue: { theme: 'light', fontSize: 14, notifications: true },
       });
 
-      // 사용자가 일부 필드만 저장
+      // User saved only some fields
       localStorage.setItem('settings', JSON.stringify({ theme: 'dark' }));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -915,7 +915,7 @@ describe('ss function', () => {
         defaultValue: 'pending',
       });
 
-      // 사용자가 잘못된 enum 값으로 변경
+      // User changed to invalid enum value
       localStorage.setItem('status', JSON.stringify('cancelled'));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -935,14 +935,14 @@ describe('ss function', () => {
         defaultValue: [],
       });
 
-      // 일부 아이템이 잘못된 형식
+      // Some items have incorrect format
       localStorage.setItem(
         'todos',
         JSON.stringify([
           { id: 1, text: 'Task 1', completed: false },
-          { id: '2', text: 'Task 2', completed: false }, // id가 string
-          { id: 3, text: 'Task 3' }, // completed 누락
-          { id: 4, text: 'Task 4', completed: 'yes' }, // boolean이 아님
+          { id: '2', text: 'Task 2', completed: false }, // id is string
+          { id: 3, text: 'Task 3' }, // completed missing
+          { id: 4, text: 'Task 4', completed: 'yes' }, // not a boolean
         ])
       );
 
@@ -968,12 +968,12 @@ describe('ss function', () => {
         },
       });
 
-      // nested object가 평탄화됨
+      // nested object is flattened
       localStorage.setItem(
         'config',
         JSON.stringify({
-          app: { name: 'MyApp' }, // version 누락
-          user: 'admin', // object가 아님
+          app: { name: 'MyApp' }, // version missing
+          user: 'admin', // not an object
         })
       );
 
@@ -987,7 +987,7 @@ describe('ss function', () => {
         defaultValue: '',
       });
 
-      // union에 포함되지 않는 타입
+      // Type not included in union
       localStorage.setItem('value', JSON.stringify({ invalid: 'object' }));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -1000,7 +1000,7 @@ describe('ss function', () => {
         defaultValue: [],
       });
 
-      // string array인데 object가 들어감
+      // Object in string array
       localStorage.setItem('tags', JSON.stringify(['tag1', { name: 'tag2' }, 'tag3']));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -1013,7 +1013,7 @@ describe('ss function', () => {
         defaultValue: false,
       });
 
-      // boolean이 아닌 truthy 값들
+      // Truthy values instead of boolean
       localStorage.setItem('enabled', JSON.stringify(1));
       expect(safeStorage.get(storage)).toBeNull();
 
@@ -1031,7 +1031,7 @@ describe('ss function', () => {
         defaultValue: 0,
       });
 
-      // 숫자처럼 보이는 문자열
+      // Numeric-looking string
       localStorage.setItem('count', JSON.stringify('123'));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -1045,7 +1045,7 @@ describe('ss function', () => {
         defaultValue: [],
       });
 
-      // object array인데 primitive array
+      // Primitive array instead of object array
       localStorage.setItem('items', JSON.stringify([1, 2, 3]));
 
       expect(safeStorage.get(storage)).toBeNull();
@@ -1070,14 +1070,14 @@ describe('ss function', () => {
         defaultValue: { value: '' },
       });
 
-      // 사용자가 수동으로 잘못된 JSON 작성
-      localStorage.setItem('data', '{value: "test"}'); // 따옴표 없음
+      // User manually wrote invalid JSON
+      localStorage.setItem('data', '{value: "test"}'); // no quotes
       expect(safeStorage.get(storage)).toBeNull();
 
       localStorage.setItem('data', '{"value": "test",}'); // trailing comma
       expect(safeStorage.get(storage)).toBeNull();
 
-      localStorage.setItem('data', "{'value': 'test'}"); // 작은따옴표
+      localStorage.setItem('data', "{'value': 'test'}"); // single quotes
       expect(safeStorage.get(storage)).toBeNull();
     });
 
@@ -1088,14 +1088,14 @@ describe('ss function', () => {
         defaultValue: { id: 0 },
       });
 
-      // JSON을 두 번 stringify (실수로 발생 가능)
+      // Stringify JSON twice (can happen by mistake)
       const data = { id: 123 };
       const onceStringified = JSON.stringify(data); // '{"id":123}'
       const twiceStringified = JSON.stringify(onceStringified); // '"{\\"id\\":123}"'
 
       localStorage.setItem('double-stringified', twiceStringified);
 
-      // JSON.parse 한 번 하면 문자열이 나오고, 그게 스키마와 안 맞음
+      // One JSON.parse returns a string, which doesn't match the schema
       expect(safeStorage.get(storage)).toBeNull();
     });
 
@@ -1145,7 +1145,7 @@ describe('ss function', () => {
         defaultValue: [],
       });
 
-      // 일부 중첩 배열이 평탄화됨
+      // Some nested arrays are flattened
       localStorage.setItem('matrix', JSON.stringify([[1, 2], 3, [4, 5]]));
 
       expect(safeStorage.get(storage)).toBeNull();

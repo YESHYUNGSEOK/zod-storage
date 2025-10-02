@@ -3,22 +3,22 @@ import { SafeStorageGetOptions } from '../types/safe-storage.type';
 import { getStorageObject } from '../utils/getStorageObject';
 
 /**
- * 스토리지에서 값을 가져옵니다.
- * - JSON parse 및 zod schema validation을 통과하지 못하면 옵션에 따라 null 또는 defaultValue 반환
+ * Retrieves a value from storage.
+ * - Returns null or defaultValue based on options if JSON parse or Zod schema validation fails
  *
- * @template T 저장되는 값의 타입
- * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
- * @returns {T | null} 저장된 값. 값이 없으면 `null`
+ * @template T The type of the stored value
+ * @param {SafeStorage<T>} storageConfig - Storage configuration including key, schema, and defaultValue
+ * @returns {T | null} The stored value, or `null` if not found
  */
 function get<T>(storageConfig: SafeStorage<T>): T | null;
 /**
- * 스토리지에서 값을 가져옵니다.
- * - JSON parse 및 zod schema validation을 통과하지 못하면 옵션에 따라 null 또는 defaultValue 반환
+ * Retrieves a value from storage.
+ * - Returns null or defaultValue based on options if JSON parse or Zod schema validation fails
  *
- * @template T 저장되는 값의 타입
- * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
- * @param {SafeStorageGetOptions} options - 선택적 옵션
- * @returns {T | null} 저장된 값. 값이 없으면 `null`, 잘못된 값이면 옵션에 따라 `defaultValue` 또는 `null`
+ * @template T The type of the stored value
+ * @param {SafeStorage<T>} storageConfig - Storage configuration including key, schema, and defaultValue
+ * @param {SafeStorageGetOptions} options - Optional options
+ * @returns {T | null} The stored value, `null` if not found, or `defaultValue`/`null` based on options if invalid
  */
 function get<T>(storageConfig: SafeStorage<T>, options: SafeStorageGetOptions): T | null;
 function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions): T | null {
@@ -41,14 +41,14 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
       return result.data;
     }
 
-    // ❌ Zod validation 실패
+    // ❌ Zod validation failed
     if (onFailure === 'throw') {
       throw result.error;
     }
 
     return onFailure === 'default' ? defaultValue : null;
   } catch (err) {
-    // ❌ JSON.parse 등 런타임 에러
+    // ❌ JSON.parse or other runtime error
     if (onFailure === 'throw') {
       if (err instanceof Error) {
         throw new Error(`SafeStorage parsing error: ${err.message}`);
@@ -62,11 +62,11 @@ function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions):
 }
 
 /**
- * 스토리지에 값을 저장합니다.
+ * Stores a value in storage.
  *
- * @template T 저장되는 값의 타입
- * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
- * @param {T} data - 저장할 데이터
+ * @template T The type of the stored value
+ * @param {SafeStorage<T>} storageConfig - Storage configuration including key, schema, and defaultValue
+ * @param {T} data - The data to store
  * @returns {void}
  */
 function set<T>(storageConfig: SafeStorage<T>, data: T): void {
@@ -77,10 +77,10 @@ function set<T>(storageConfig: SafeStorage<T>, data: T): void {
 }
 
 /**
- * 스토리지에서 해당 키의 값을 제거합니다.
+ * Removes a value from storage for the given key.
  *
- * @template T 저장되는 값의 타입
- * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
+ * @template T The type of the stored value
+ * @param {SafeStorage<T>} storageConfig - Storage configuration including key, schema, and defaultValue
  * @returns {void}
  */
 function remove<T>(storageConfig: SafeStorage<T>): void {
@@ -91,11 +91,11 @@ function remove<T>(storageConfig: SafeStorage<T>): void {
 }
 
 /**
- * 스토리지 값을 기본값(defaultValue)으로 초기화합니다.
- * (존재 여부 확인 없이 무조건 덮어씀)
+ * Initializes storage with the default value.
+ * (Overwrites unconditionally without checking existence)
  *
- * @template T 저장되는 값의 타입
- * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
+ * @template T The type of the stored value
+ * @param {SafeStorage<T>} storageConfig - Storage configuration including key, schema, and defaultValue
  * @returns {void}
  */
 function init<T>(storageConfig: SafeStorage<T>): void {
@@ -104,22 +104,22 @@ function init<T>(storageConfig: SafeStorage<T>): void {
 }
 
 /**
- * Zod 스키마 기반 타입 안전한 Web Storage 유틸
- * localStorage와 sessionStorage를 지원합니다.
+ * Type-safe Web Storage utility based on Zod schema
+ * Supports both localStorage and sessionStorage.
  *
  * @example
  * ```ts
  * import { ss, safeStorage } from "@package/safe-storage";
  * import { z } from "zod";
  *
- * // localStorage 사용 (기본)
+ * // Using localStorage (default)
  * const LocalData = ss({
  *   key: 'localData',
  *   schema: z.array(z.number()),
  *   defaultValue: []
  * });
  *
- * // sessionStorage 사용
+ * // Using sessionStorage
  * const SessionData = ss({
  *   key: 'sessionData',
  *   schema: z.string(),

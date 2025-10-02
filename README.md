@@ -1,14 +1,15 @@
 # ss
 
-Type-safe localStorage wrapper with Zod runtime validation for React, Vue, Angular, and more.
+Type-safe Web Storage wrapper with Zod runtime validation for React, Vue, Angular, and vanilla JavaScript.
 
 ## Features
 
 - 🔒 **Type-safe**: Full TypeScript support with automatic type inference
 - ✅ **Runtime validation**: Powered by Zod schema validation
 - 🎯 **Framework agnostic**: Works with React, Vue, Angular, or vanilla JS
+- 💾 **Dual storage**: Supports both localStorage and sessionStorage
 - 📦 **Lightweight**: Minimal bundle size with tree-shaking support
-- 🚀 **Simple API**: Easy to use with intuitive methods
+- 🚀 **Simple API**: Intuitive methods with flexible error handling
 
 ## Installation
 
@@ -20,132 +21,372 @@ pnpm add ss zod
 yarn add ss zod
 ```
 
-## Usage
-
-### Basic Example
+## Quick Start
 
 ```typescript
 import { z } from 'zod';
-import { createLocalStorage } from 'ss';
+import { ss, safeStorage } from 'ss';
 
-// Define your schema
-const userSchema = z.object({
-  name: z.string(),
-  age: z.number(),
-  email: z.string().email(),
+// Define your storage with schema
+const userStorage = ss({
+  key: 'user',
+  schema: z.object({
+    name: z.string(),
+    age: z.number(),
+    email: z.string().email(),
+  }),
+  defaultValue: { name: '', age: 0, email: '' }
 });
 
-// Create a typed storage instance
-const userStorage = createLocalStorage('user', userSchema);
-
-// Set data (validated automatically)
-userStorage.set({
+// Set data (automatically validated)
+safeStorage.set(userStorage, {
   name: 'John Doe',
   age: 30,
   email: 'john@example.com',
 });
 
 // Get data (returns typed data or null)
-const user = userStorage.get();
+const user = safeStorage.get(userStorage);
 console.log(user); // { name: 'John Doe', age: 30, email: 'john@example.com' }
 
 // Remove data
-userStorage.remove();
-
-// Clear all localStorage
-userStorage.clear();
+safeStorage.remove(userStorage);
 ```
 
-### With Prefix
+## API Reference
+
+### `ss(config)`
+
+Creates a storage configuration object.
+
+**Parameters:**
+
+- `config.key` (string): The storage key
+- `config.schema` (ZodType): Zod schema for validation
+- `config.defaultValue` (T): Default value for initialization
+- `config.storage` ('local' | 'session', optional): Storage type (default: 'local')
+
+**Returns:** `SafeStorage<T>` configuration object
+
+### `safeStorage.get(storage, options?)`
+
+Retrieves and validates data from storage.
+
+**Parameters:**
+
+- `storage` (SafeStorage<T>): Storage configuration
+- `options.onFailure` ('null' | 'default' | 'throw', optional): Error handling behavior
+  - `'null'`: Returns `null` on failure (default)
+  - `'default'`: Returns `defaultValue` on failure
+  - `'throw'`: Throws an exception on failure
+
+**Returns:** `T | null` - Validated data or null
+
+**Example:**
 
 ```typescript
-import { z } from 'zod';
-import { createLocalStorage } from 'ss';
+// Return null on validation failure (default)
+const data = safeStorage.get(userStorage);
 
-const themeSchema = z.enum(['light', 'dark']);
+// Return default value on validation failure
+const data = safeStorage.get(userStorage, { onFailure: 'default' });
 
-const themeStorage = createLocalStorage('theme', themeSchema, {
-  prefix: 'myapp', // stored as 'myapp:theme'
-});
-
-themeStorage.set('dark');
+// Throw error on validation failure
+const data = safeStorage.get(userStorage, { onFailure: 'throw' });
 ```
 
-### React Example
+### `safeStorage.set(storage, data)`
+
+Stores validated data in storage.
+
+**Parameters:**
+
+- `storage` (SafeStorage<T>): Storage configuration
+- `data` (T): Data to store
+
+**Returns:** `void`
+
+### `safeStorage.remove(storage)`
+
+Removes data from storage.
+
+**Parameters:**
+
+- `storage` (SafeStorage<T>): Storage configuration
+
+**Returns:** `void`
+
+### `safeStorage.init(storage)`
+
+Initializes storage with the default value.
+
+**Parameters:**
+
+- `storage` (SafeStorage<T>): Storage configuration
+
+**Returns:** `void`
+
+## Usage Examples
+
+### Basic Types
+
+```typescript
+// Number array
+const numbersStorage = ss({
+  key: 'numbers',
+  schema: z.array(z.number()),
+  defaultValue: []
+});
+
+// String
+const nameStorage = ss({
+  key: 'name',
+  schema: z.string(),
+  defaultValue: ''
+});
+
+// Boolean
+const flagStorage = ss({
+  key: 'flag',
+  schema: z.boolean(),
+  defaultValue: false
+});
+```
+
+### Enum Types
+
+```typescript
+const themeStorage = ss({
+  key: 'theme',
+  schema: z.enum(['light', 'dark', 'auto']),
+  defaultValue: 'light'
+});
+
+safeStorage.set(themeStorage, 'dark');
+```
+
+### Complex Objects
+
+```typescript
+const profileSchema = z.object({
+  user: z.object({
+    id: z.number(),
+    name: z.string(),
+  }),
+  settings: z.object({
+    theme: z.string(),
+    notifications: z.boolean(),
+  }),
+});
+
+const profileStorage = ss({
+  key: 'profile',
+  schema: profileSchema,
+  defaultValue: {
+    user: { id: 0, name: '' },
+    settings: { theme: 'light', notifications: true }
+  }
+});
+```
+
+### SessionStorage
+
+```typescript
+const sessionData = ss({
+  key: 'tempData',
+  schema: z.string(),
+  defaultValue: '',
+  storage: 'session' // Use sessionStorage instead of localStorage
+});
+
+safeStorage.set(sessionData, 'temporary value');
+```
+
+### React Integration
 
 ```typescript
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { createLocalStorage } from 'ss';
+import { ss, safeStorage } from 'ss';
 
 const settingsSchema = z.object({
   notifications: z.boolean(),
   theme: z.enum(['light', 'dark']),
 });
 
-const settingsStorage = createLocalStorage('settings', settingsSchema);
+const settingsStorage = ss({
+  key: 'settings',
+  schema: settingsSchema,
+  defaultValue: { notifications: true, theme: 'light' }
+});
 
 function useSettings() {
   const [settings, setSettings] = useState(() =>
-    settingsStorage.get() ?? { notifications: true, theme: 'light' }
+    safeStorage.get(settingsStorage) ?? settingsStorage.defaultValue
   );
 
   useEffect(() => {
-    settingsStorage.set(settings);
+    safeStorage.set(settingsStorage, settings);
   }, [settings]);
 
   return [settings, setSettings] as const;
 }
 ```
 
-### Vue Example
+### Vue Integration
 
 ```vue
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { z } from 'zod';
-import { createLocalStorage } from 'ss';
+import { ss, safeStorage } from 'ss';
 
 const userSchema = z.object({
   name: z.string(),
   age: z.number(),
 });
 
-const userStorage = createLocalStorage('user', userSchema);
-const user = ref(userStorage.get() ?? { name: '', age: 0 });
+const userStorage = ss({
+  key: 'user',
+  schema: userSchema,
+  defaultValue: { name: '', age: 0 }
+});
+
+const user = ref(safeStorage.get(userStorage) ?? userStorage.defaultValue);
 
 watch(user, (newUser) => {
-  userStorage.set(newUser);
+  safeStorage.set(userStorage, newUser);
 }, { deep: true });
 </script>
 ```
 
-## API
+### Error Handling
 
-### `createLocalStorage(key, schema, options?)`
+```typescript
+const dataStorage = ss({
+  key: 'data',
+  schema: z.array(z.number()),
+  defaultValue: [1, 2, 3]
+});
 
-Creates a localStorage wrapper with validation.
+// Scenario 1: Invalid data in storage
+localStorage.setItem('data', 'invalid json');
 
-**Parameters:**
-- `key` (string): The localStorage key
-- `schema` (ZodType): Zod schema for validation
-- `options` (optional):
-  - `prefix` (string): Key prefix (e.g., 'myapp:key')
+// Returns null (default behavior)
+const result1 = safeStorage.get(dataStorage);
+console.log(result1); // null
 
-**Returns:** Storage instance with methods:
+// Returns default value
+const result2 = safeStorage.get(dataStorage, { onFailure: 'default' });
+console.log(result2); // [1, 2, 3]
 
-#### `.get()`
-Returns validated data or `null` if not found or invalid.
+// Throws error
+try {
+  const result3 = safeStorage.get(dataStorage, { onFailure: 'throw' });
+} catch (error) {
+  console.error('Validation failed:', error);
+}
+```
 
-#### `.set(value)`
-Stores validated data. Throws if validation fails.
+### Advanced Validation
 
-#### `.remove()`
-Removes the item from localStorage.
+```typescript
+// Email validation
+const emailStorage = ss({
+  key: 'email',
+  schema: z.string().email(),
+  defaultValue: ''
+});
 
-#### `.clear()`
-Clears all localStorage.
+// Number constraints
+const ageStorage = ss({
+  key: 'age',
+  schema: z.number().min(0).max(120),
+  defaultValue: 0
+});
+
+// Pattern matching
+const codeStorage = ss({
+  key: 'code',
+  schema: z.string().regex(/^[A-Z]{3}-\d{3}$/),
+  defaultValue: ''
+});
+
+// Transformed values
+const upperCaseStorage = ss({
+  key: 'name',
+  schema: z.string().transform(val => val.toUpperCase()),
+  defaultValue: ''
+});
+```
+
+## TypeScript
+
+The library is written in TypeScript and provides full type safety:
+
+```typescript
+import { SafeStorage, SafeStorageGetOptions, StorageType } from 'ss';
+
+// All types are automatically inferred
+const storage = ss({
+  key: 'data',
+  schema: z.object({ id: z.number(), name: z.string() }),
+  defaultValue: { id: 0, name: '' }
+});
+
+// TypeScript knows the exact type
+const data = safeStorage.get(storage); // { id: number, name: string } | null
+```
+
+## Why ss?
+
+### Data Integrity
+
+Without validation, localStorage can contain corrupted or invalid data:
+
+```typescript
+// Without ss - No type safety
+localStorage.setItem('user', JSON.stringify({ id: '123' })); // Wrong type!
+const user = JSON.parse(localStorage.getItem('user')!);
+console.log(user.id + 1); // "1231" - String concatenation bug!
+
+// With ss - Runtime validation catches errors
+const userStorage = ss({
+  key: 'user',
+  schema: z.object({ id: z.number() }),
+  defaultValue: { id: 0 }
+});
+
+const user = safeStorage.get(userStorage); // null (validation failed)
+const safeUser = safeStorage.get(userStorage, { onFailure: 'default' }); // { id: 0 }
+```
+
+### Type Safety
+
+```typescript
+const storage = ss({
+  key: 'count',
+  schema: z.number(),
+  defaultValue: 0
+});
+
+safeStorage.set(storage, 'invalid'); // TypeScript error!
+safeStorage.set(storage, 42); // OK
+```
+
+### Framework Agnostic
+
+Works seamlessly with any JavaScript framework or vanilla JS. No framework-specific dependencies.
 
 ## License
 
 MIT © [YESHYUNGSEOK](https://github.com/YESHYUNGSEOK)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Repository
+
+- GitHub: [https://github.com/YESHYUNGSEOK/ss](https://github.com/YESHYUNGSEOK/ss)
+- Issues: [https://github.com/YESHYUNGSEOK/ss/issues](https://github.com/YESHYUNGSEOK/ss/issues)

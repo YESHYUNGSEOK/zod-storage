@@ -2,24 +2,24 @@ import { ZodType } from 'zod';
 import { StorageType } from './storage.type';
 
 /**
- * 타입 안전한 스토리지 엔트리 설정을 정의하는 타입
+ * Type defining type-safe storage entry configuration
  *
- * @template T 저장되는 값의 타입
+ * @template T The type of the stored value
  *
  * @property {string} key
- *   - 스토리지 key
- *   - 실제 localStorage/sessionStorage.getItem / setItem 시 사용되는 문자열
+ *   - Storage key
+ *   - The string used when calling localStorage/sessionStorage.getItem / setItem
  *
  * @property {ZodType<T>} value
- *   - 저장된 데이터를 검증/파싱할 zod schema
- *   - get 시에 JSON.parse 후 schema.safeParse로 검증
+ *   - Zod schema to validate/parse stored data
+ *   - Validates with schema.safeParse after JSON.parse on get
  *
  * @property {T} defaultValue
- *   - init을 위한 기본값
+ *   - Default value for initialization
  *
  * @property {StorageType} storage
- *   - 사용할 스토리지 타입 ("local" | "session")
- *   - 기본값: "local"
+ *   - Storage type to use ("local" | "session")
+ *   - Default: "local"
  */
 export type SafeStorage<T> = {
   key: string;

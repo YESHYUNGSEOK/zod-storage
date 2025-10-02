@@ -1,4 +1,4 @@
 /**
- * 스토리지 타입
+ * Storage type
  */
 export type StorageType = 'local' | 'session';
