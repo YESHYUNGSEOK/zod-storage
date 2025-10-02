@@ -1,4 +1,5 @@
 import { SafeStorage } from './types';
+import { SafeStorageGetOptions } from './options';
 
 /**
  * 로컬 스토리지에서 값을 가져옵니다.
@@ -19,10 +20,11 @@ function get<T>(storageConfig: SafeStorage<T>): T | null;
  * @param {boolean} options.strict - true일 경우 parse 실패 시 null 반환, false일 경우 defaultValue 반환 (기본값: false)
  * @returns {T | null} 저장된 값. 값이 없으면 `null`, 잘못된 값이면 옵션에 따라 `defaultValue` 또는 `null`
  */
-function get<T>(storageConfig: SafeStorage<T>, options: { strict?: boolean }): T | null;
-function get<T>(storageConfig: SafeStorage<T>, options?: { strict?: boolean }): T | null {
+function get<T>(storageConfig: SafeStorage<T>): T | null;
+function get<T>(storageConfig: SafeStorage<T>, options: SafeStorageGetOptions): T | null;
+function get<T>(storageConfig: SafeStorage<T>, options?: SafeStorageGetOptions): T | null {
   const { key, value: schema, defaultValue } = storageConfig;
-  const { strict = false } = options ?? {};
+  const { onFailure = 'null' } = options ?? {};
 
   try {
     const raw = localStorage.getItem(key);
@@ -38,20 +40,21 @@ function get<T>(storageConfig: SafeStorage<T>, options?: { strict?: boolean }): 
       return result.data;
     }
 
-    // 파싱 실패 시
-    // defaultValue가 없거나 strict 모드면 null 반환
-    if (defaultValue === undefined || strict) {
-      return null;
+    // ❌ Zod validation 실패
+    if (onFailure === 'throw') {
+      throw result.error;
     }
 
-    return defaultValue;
-  } catch {
-    // JSON 파싱 실패 시
-    if (defaultValue === undefined || strict) {
-      return null;
+    return onFailure === 'default' ? defaultValue : null;
+  } catch (err) {
+    // ❌ JSON.parse 등 런타임 에러
+    if (onFailure === 'throw') {
+      if (err instanceof Error) {
+        throw new Error(`SafeStorage parsing error: ${err.message}`);
+      }
+      throw new Error('SafeStorage: Unknown error');
     }
-
-    return defaultValue;
+    return onFailure === 'default' ? defaultValue : null;
   }
 }
 
@@ -87,15 +90,9 @@ function remove<T>(storageConfig: SafeStorage<T>): void {
  * @template T 저장되는 값의 타입
  * @param {SafeStorage<T>} storageConfig - key, schema, defaultValue를 포함한 스토리지 설정
  * @returns {void}
- * @throws {Error} defaultValue가 없으면 에러 발생
  */
 function init<T>(storageConfig: SafeStorage<T>): void {
   const { defaultValue } = storageConfig;
-
-  if (defaultValue === undefined) {
-    throw new Error(`Cannot init storage "${storageConfig.key}": defaultValue is not provided`);
-  }
-
   set(storageConfig, defaultValue);
 }
 

@@ -13,12 +13,11 @@ import { ZodType } from 'zod';
  *   - 저장된 데이터를 검증/파싱할 zod schema
  *   - get 시에 JSON.parse 후 schema.safeParse로 검증
  *
- * @property {T | undefined} defaultValue
- *   - init을 위한 기본값 (선택적)
- *   - 없으면 get 시 파싱 실패 시 에러 발생하거나 null 반환
+ * @property {T} defaultValue
+ *   - init을 위한 기본값
  */
 export type SafeStorage<T> = {
   key: string;
   value: ZodType<T>;
-  defaultValue?: T;
+  defaultValue: T;
 };
