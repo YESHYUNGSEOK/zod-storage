@@ -1,2 +1,3 @@
-export { safeStorage } from './core/SafeStorage';
-export type { SafeStorage } from './types/safe-storage';
+export { safeStorage } from './safe-storage';
+export { ss } from './ss';
+export type { SafeStorage } from './types';
